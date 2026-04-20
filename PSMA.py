@@ -1,52 +1,16 @@
-import sys
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow,QPushButton,QVBoxLayout,QWidget
-# class MainWindow(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#         self.setWindowTitle("My app")
-#         self.button=QPushButton("Push Me")
-#         self.setFixedSize(QSize(400,300))
-#         self.button.setCheckable(True)
-#         self.button.clicked.connect(self.the_button_was_clicked)
-#         self.button.clicked.connect(self.the_button_was_toggled)
-#         self.setCentralWidget(self.button)
-#     def the_button_was_clicked(self):
-#         self.button.setText("You already clicked me.")
-#         self.button.setEnabled(False)
-#         self.setWindowTitle("My oneshot app")
-#     def the_button_was_toggled(self, checked):
-#         print("checked?", checked)
+import matplotlib.pyplot as plt
+import numpy as np
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("My app")
-        layout1 = QVBoxLayout()
-        layout2 = QVBoxLayout()
-        layout3= QVBoxLayout()
-        layout1.setContentsMargins(50,20,50,20)
-        layout1.setSpacing(20)
-        layout2.addWidget(QPushButton('red'))
-        layout2.addWidget(QPushButton('yellow'))
-        layout2.addWidget(QPushButton('purple'))
-        layout1.addLayout(layout2)
+x1 = np.array([10,100,20,90,30,80,40,70,50,60])
+y1 = np.array([1,2,3,4,5,6,7,8,9,10])
+y2 = np.array([1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5])
+x2 = np.array([60])
+y3 = np.array([11])
+font1 = {'family':'Comic Sans MS', 'fontsize':15}
 
-        layout1.addWidget(QPushButton('green'))
-
-        layout3.addWidget(QPushButton('red'))
-        layout3.addWidget(QPushButton('purple'))
-
-        layout1.addLayout(layout3)
-
-        # layout.addWidget(QPushButton("don't click me"))
-        # layout.addWidget(QPushButton("..."))
-        widget = QWidget()
-        widget.setLayout(layout1)
-        self.setCentralWidget(widget)
-
-
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+plt.plot(x1, y1, linewidth = '10', color = 'g', marker = 'o', label = 'x', ls = '--')
+plt.plot(x1,y2, linewidth = '10', color = 'g', marker = 'o', label = 'x', ls = '--')
+plt.plot(x2, y3, marker = '*', markersize = 50, color = 'y')
+plt.xlabel('John 8:44')
+plt.title('JEBAĆ ŻYDÓW', fontdict = font1)
+plt.show()
