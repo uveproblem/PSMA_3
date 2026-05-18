@@ -1,26 +1,77 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.axes import Subplot
+import datetime
 
-x1 = np.array([10,100,20,90,30,80,40,70,50,60])
-y1 = np.array([1,2,3,4,5,6,7,8,9,10])
-y2 = np.array([1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5])
-x2 = np.array([60])
-y3 = np.array([11])
-x3 = np.array(['A', 'B', 'C', 'D','E','F'])
-y4 = np.array([68,2,4,16])
-mylables = ['niggers', 'white', 'asian', 'jews']
-myexplode = [0.2,0,0,0]
-colors = np.array([100,20,50,40,30,60,90,70,10,80])
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import sys
 
-font1 = {'family':'Comic Sans MS', 'fontsize':15}
-#plt.subplot(121)
-#plt.plot(x1, y1, linewidth = '10', color = 'g', marker = 'o', label = 'x', ls = '--')
-#plt.plot(x1,y2, linewidth = '10', color = 'g', marker = 'o', label = 'x', ls = '--')
-#plt.plot(x2, y3, marker = '*', markersize = 50, color = 'y')
-#plt.xlabel('John 8:44')
-#plt.title('JEBAĆ ŻYDÓW', fontdict = font1)
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel, QPushButton, QHBoxLayout,
+QLineEdit, QMessageBox, QLabel, QPushButton, QHBoxLayout,)
 
-#plt.subplot(122)
-plt.pie(y4, labels = mylables, explode = myexplode)
-plt.show()
+today = datetime.datetime.today()
+data = today.strftime('%Y-%m-%d')
+class MplCanvas(FigureCanvas):
+    def __init__(self):
+        self.figure = Figure()
+        self.ax = self.figure.add_subplot(111)
+        super().__init__(self.figure)
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Ilu żydów popełniło lichwę")
+        self.resize(1000, 800)
+
+        self.values = []
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout()
+        central_widget.setLayout(main_layout)
+
+        input_layout = QHBoxLayout()
+        self.label = QLabel("Podaj wartość:")
+        self.input_field = QLineEdit()
+        self.input_field.setPlaceholderText("Np. 125")
+        self.add_button = QPushButton("Dodaj")
+        self.add_button.clicked.connect(self.add_value)
+        input_layout.addWidget(self.label)
+        input_layout.addWidget(self.input_field)
+        input_layout.addWidget(self.add_button)
+        self.canvas = MplCanvas()
+
+        main_layout.addLayout(input_layout)
+        main_layout.addWidget(self.canvas)
+        self.update_plot()
+
+    def add_value(self):
+        text = self.input_field.text().strip()
+        if not text:
+            QMessageBox.warning(self, "Błąd", "Wpisz wartość.")
+            return
+        try:
+            value = float(text)
+        except ValueError:
+            QMessageBox.warning(self, "Błąd", "Podaj poprawną liczbę.")
+            return
+        self.values.append(value)
+        self.input_field.clear()
+        self.update_plot()
+    def update_plot(self):
+        self.canvas.ax.clear()
+        if self.values:
+            x = list(range(1, len(self.values) + 1))
+            self.canvas.ax.plot(x, self.values, marker='o')
+            self.canvas.ax.set_title("Dzisiejsze lichwy:")
+            self.canvas.ax.set_xlabel("Numer punktu")
+            self.canvas.ax.set_ylabel("Ilość lichw")
+            self.canvas.ax.grid(True)
+        else:
+            self.canvas.ax.set_title("Brak danych z dnia:")
+            self.canvas.ax.set_xlabel("Seria danych")
+            self.canvas.ax.set_ylabel("Ilośc lichw")
+            self.canvas.ax.grid(True)
+        self.canvas.draw()
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()
