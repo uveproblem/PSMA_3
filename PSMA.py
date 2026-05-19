@@ -1,77 +1,57 @@
-import datetime
+import cv2
+import numpy as np
+#import numpy as np
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import sys
-
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel, QPushButton, QHBoxLayout,
-QLineEdit, QMessageBox, QLabel, QPushButton, QHBoxLayout,)
-
-today = datetime.datetime.today()
-data = today.strftime('%Y-%m-%d')
-class MplCanvas(FigureCanvas):
-    def __init__(self):
-        self.figure = Figure()
-        self.ax = self.figure.add_subplot(111)
-        super().__init__(self.figure)
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Ilu żydów popełniło lichwę")
-        self.resize(1000, 800)
-
-        self.values = []
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout()
-        central_widget.setLayout(main_layout)
-
-        input_layout = QHBoxLayout()
-        self.label = QLabel("Podaj wartość:")
-        self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Np. 125")
-        self.add_button = QPushButton("Dodaj")
-        self.add_button.clicked.connect(self.add_value)
-        input_layout.addWidget(self.label)
-        input_layout.addWidget(self.input_field)
-        input_layout.addWidget(self.add_button)
-        self.canvas = MplCanvas()
-
-        main_layout.addLayout(input_layout)
-        main_layout.addWidget(self.canvas)
-        self.update_plot()
-
-    def add_value(self):
-        text = self.input_field.text().strip()
-        if not text:
-            QMessageBox.warning(self, "Błąd", "Wpisz wartość.")
-            return
-        try:
-            value = float(text)
-        except ValueError:
-            QMessageBox.warning(self, "Błąd", "Podaj poprawną liczbę.")
-            return
-        self.values.append(value)
-        self.input_field.clear()
-        self.update_plot()
-    def update_plot(self):
-        self.canvas.ax.clear()
-        if self.values:
-            x = list(range(1, len(self.values) + 1))
-            self.canvas.ax.plot(x, self.values, marker='o')
-            self.canvas.ax.set_title("Dzisiejsze lichwy:")
-            self.canvas.ax.set_xlabel("Numer punktu")
-            self.canvas.ax.set_ylabel("Ilość lichw")
-            self.canvas.ax.grid(True)
-        else:
-            self.canvas.ax.set_title("Brak danych z dnia:")
-            self.canvas.ax.set_xlabel("Seria danych")
-            self.canvas.ax.set_ylabel("Ilośc lichw")
-            self.canvas.ax.grid(True)
-        self.canvas.draw()
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+webcam = cv2.VideoCapture(0)
+while True:
+    _, frame = webcam.read()
+    frame = cv2.flip(frame, 1)
+    hsvFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    #RED
+    red_lower = np.array([136, 87, 111], np.uint8)
+    red_upper = np.array([180, 255, 255], np.uint8)
+    red_mask = cv2.inRange(hsvFrame, red_lower, red_upper)
+    #GREEN
+    green_lower = np.array([20, 62, 30], np.uint8)
+    green_upper = np.array([40, 75, 65], np.uint8)
+    green_mask = cv2.inRange(hsvFrame, green_lower, green_upper)
+    #BLUE
+    blue_lower = np.array([0, 0, 255], np.uint8)
+    blue_upper = np.array([180, 255, 255], np.uint8)
+    blue_mask = cv2.inRange(hsvFrame, blue_lower, blue_upper)
+    #KERNAL
+    kernal = np.ones((5, 5), np.uint8)
+    green_mask = cv2.dilate(green_mask, kernal)
+    #CONTOUR_GREEN
+    contours, hierarchy = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    for pic, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area > 200:
+            x, y, w, h = cv2.boundingRect(contour)
+            imageFrame = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
+            cv2.putText(frame, "Green", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    #CONTOUR_BLUE
+    contours, hierarchy = cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    for pic, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area > 200:
+            x, y, w, h = cv2.boundingRect(contour)
+            imageFrame = cv2.rectangle(frame, (x, y), (x + w, y + h), (225, 0, 0), 5)
+            cv2.putText(frame, "blue", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (225, 0, 0), 2)
+    #CONTOUR_RED
+    contours, hierarchy = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    for pic, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area > 200:
+            x, y, w, h = cv2.boundingRect(contour)
+            imageFrame = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 225), 5)
+            cv2.putText(frame, "Red", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 2)
+    #IM_SHOW
+    #cv2.imshow('frame', frame)
+    #cv2.imshow('red_mask', red_mask)
+    #cv2.imshow('green_mask', green_mask)
+    #cv2.imshow('blue_mask', blue_mask)
+    cv2.imshow("Frame", frame)
+    key = cv2.waitKey(20)
+    if key == ord('q'):
+        break
