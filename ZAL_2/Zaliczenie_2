@@ -1,0 +1,43 @@
+ETAP 1: Warstwa logiki biznesowej
+Zaimplementować rdzeń aplikacji w oparciu o paradygmat  programowania obiektowego
+
+1. Klasa Wynajmujący (Klient)
+Pola klasy:
+- Imie (string)
+- nazwisko (string)
+- nr_dowodu (string - unikalny identyfikator dokumentu tożsamości)
+
+2. Klasa Samochod
+Pola klasy:
+- marka (string)
+- model (string)
+- rok_produkcji (int)
+- nr_vin (string)
+- przebieg (int/float)
+- cena_wynajmu_doba (float)
+- czy_wypozyczony (boolean)
+
+3. Klasa Wypozyczalnia
+Klasa zarządzająca flotą oraz procesami biznesowymi. Powinna zawierać kolekcje pojazdów oraz historie transakcji.
+- Metody:
+    - dodaj_samochod(samochod): Dodaje nowy pojazd do bazy. System nie powinien pozwolić na dodanie dwóch pojazdów o tym samym numerze VIN lub rejestracyjnym
+    - wypozycz_samochod(nr_rejestracyjny, wynajmujacy): Zmienia status na wypozyczony . Data wypożyczenia powinna być pobierana automatycznie z systemu.
+        - Obsługa błędów: Jeśli pojazd nie istnieje lub jest już wypożyczony, metoda musi rzucić dedykowany wyjątek np. (VehicleNotAvailableException)
+    - zwroc_samochod(nr_rejestracyjny, aktualny_przebieg, liczba_dni). Przyjmuje zwrot, aktualizuje przebieg pojazdu(nowy przebieg nie mniejszy niż poprzedni) oraz zmienia status na dostepny. Metoda zwraca całkowity koszt wynajmu
+
+4. Moduł statystyk i analityki
+- Stwórz funkcjonalność (metode/klase), która rejestruje historię każdego wynajmu.
+- Wymagane jest generowanie wykresu przedstawiajacego popularność samochodów -Oś X Marka model(Nr rejestracyjny), Oś Y łączna ilość najmów
+
+ETAP 2: Interfejs użytkownika
+Należy zaprojektowac intuicyjny UI z użyciem PyQT
+Wymagane elementy:
+- Panel zarządania flotą - formularz dodawania nowego samochodu oraz lista wszystkich samochodów z ich statusem
+- Panel operacyjny - możliwość wybrania samochodu z listy, wpisania danych klienta i kliknięcia wypożycz. Analogicznie sekcja zwrotu
+- Wizualizacja - generowanie wykresu w nowym oknie dot. statystyk wynajmu
+- Obsługa błędów w GUI, wyświetlane jako messagebox
+
+ETAP 3: Trwałość danych
+Aplikacja musi zachowywać swój stan pomiędzy uruchomieniami
+- Wymagania: Przy zamykaniu aplkikacji lub kluczowej operacji dane o samochpdach i historii najmu są zapisywane, przy uruchomieniu aplikacji muszą one być wczytane
+- Format zapisu JSON/CSV
