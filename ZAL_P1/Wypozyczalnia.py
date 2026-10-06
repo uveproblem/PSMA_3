@@ -1,7 +1,8 @@
 from datetime import datetime
 import json
-from encodings import utf_8
 from matplotlib import pyplot as plt
+from Samochod import Samochod
+from Wynajmujący import Wynajmujacy
 
 
 class VehicleNotAvailable(Exception):
@@ -24,7 +25,7 @@ class Wypozyczalnia:
         if samochod.nr_rejestracyjny in self.pojazdy:
             raise VehicleAlreadyExists("Istnieje już pojazd o takim numerze rejestracyjnym")
         for auto in self.pojazdy.values():
-            if auto.nr.vin == samochod.nr_vin:
+            if auto.nr_vin == samochod.nr_vin:
                 raise VehicleAlreadyExists("Istnieje pojazd z takim numerem VIN")
         self.pojazdy[samochod.nr_rejestracyjny] = samochod
 
@@ -36,6 +37,7 @@ class Wypozyczalnia:
         if auto.czy_wypozyczony:
             raise VehicleNotAvailable("Pojazd nie jest dostępny")
         else:
+            auto.czy_wypozyczony = True
             transakcje = {
                 "Data": teraz,
                 "Wynajmujący": wynajmujacy,
@@ -51,15 +53,21 @@ class Wypozyczalnia:
             raise VehicleDoNotExist("Pojazd nie był wypożyczony")
         if aktualny_przebieg < auto.przebieg:
             raise InvalidMilage("Nieprawidłowy przebieg")
+        if liczba_dni <= 0:
+            raise InvalidPeriod("Liczba dni musi być większa od zera")
+
+        auto.przebieg = aktualny_przebieg
+        auto.czy_wypozyczony = False
+        return liczba_dni * auto.cena_wynajmu
 
     def wykres(self):
         popularnosc = {}
         for auto in self.pojazdy.values():
-            etykieta = f"{auto.marka} {auto.model}(auto.nr_rejestracyjny)"
+            etykieta = f"{auto.marka} {auto.model}({auto.nr_rejestracyjny})"
             popularnosc[etykieta] = 0
 
         for t in self.historia_transakcji:
-            auto = t["samochod"]
+            auto = t["Samochód"]
             etykieta = f"{auto.marka} {auto.model}({auto.nr_rejestracyjny})"
             popularnosc[etykieta] += 1
 
@@ -72,26 +80,26 @@ class Wypozyczalnia:
         plt.tight_layout()
         plt.show()
 
-    def zapisz_do_pliku(self, nazwa_pliku = "baza.json"):
+    def zapisz_do_pliku(self, nazwa_pliku="baza.json"):
         dane_do_zapisu = {
-            "pojazdy": [auto.to_dict() for auto in self.pojazdy],
+            "pojazdy": [auto.to_dict() for auto in self.pojazdy.values()],
             "historia": [
                 {
-                    "nr_rejestracyjny": t["Samochod"].nr_rejestracyjny,
+                    "nr_rejestracyjny": t["Samochód"].nr_rejestracyjny,
                     "wynajmujący": t["Wynajmujący"].to_dict(),
                     "data": t["Data"].isoformat()
                 }
                 for t in self.historia_transakcji
             ]
         }
-        with open(nazwa_pliku, "w", encoding="utf_8") as plik:
+        with open(nazwa_pliku, "w", encoding="utf-8") as plik:
             json.dump(dane_do_zapisu, plik, indent=4)
 
-    def wczytaj_z_pliku(self, nazwa_pliku = "baza.json"):
+    def wczytaj_z_pliku(self, nazwa_pliku="baza.json"):
         try:
-            with open(nazwa_pliku, "r", encoding="utf_8") as plik:
+            with open(nazwa_pliku, "r", encoding="utf-8") as plik:
                 dane = json.load(plik)
-        except FileNotFoundError("Plik nie istnieje"):
+        except FileNotFoundError:
             return
 
         self.pojazdy = {}
@@ -101,23 +109,23 @@ class Wypozyczalnia:
             auto = Samochod(
                 auto_dane["marka"],
                 auto_dane["model"],
-                auto_dane["rok-produkcji"],
+                auto_dane["rok_produkcji"],
                 auto_dane["nr_rejestracyjny"],
                 auto_dane["nr_vin"],
                 auto_dane["przebieg"],
                 auto_dane["cena_wynajmu"]
             )
-            auto.czy_wypozycyjny = auto_dane.get("czy_wypozycyjny", False)
+            auto.czy_wypozyczony = auto_dane.get("czy_wypozyczony", False)
             self.pojazdy[auto.nr_rejestracyjny] = auto
 
         for t in dane.get("historia", []):
-            klient_dane = t["wynajmujacy"]
+            klient_dane = t["wynajmujący"]
             klient = Wynajmujacy(klient_dane["imie"], klient_dane["nazwisko"], klient_dane["nr_dowodu"])
             auto = self.pojazdy[t["nr_rejestracyjny"]]
             data = datetime.fromisoformat(t["data"])
 
             self.historia_transakcji.append({
                 "Data": data,
-                "Wynajmujacy": klient,
-                "Samochod": auto
+                "Wynajmujący": klient,
+                "Samochód": auto
             })
